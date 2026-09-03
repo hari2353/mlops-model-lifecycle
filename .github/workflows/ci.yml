@@ -31,5 +31,6 @@ jobs:
         run: pytest --cov=mlops_lifecycle --cov-report=term-missing
       - name: Full lifecycle run (train -> promote -> monitor)
         run: |
+          mkdir -p artifacts
           python scripts/run_lifecycle.py --out artifacts | tee artifacts/lifecycle.log
           python scripts/verify_lifecycle.py
