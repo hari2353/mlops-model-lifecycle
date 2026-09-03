@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mlops-lifecycle"
+version = "0.1.0"
+description = "Production MLOps model lifecycle: training, evaluation gates, model registry, drift monitoring, and automated promotion - on deterministic synthetic data"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Swetha Bethireddy" }]
+keywords = ["mlops", "model-registry", "drift", "monitoring", "mlflow", "ci-cd"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "numpy>=1.26",
+    "scikit-learn>=1.4",
+]
+
+[project.optional-dependencies]
+mlflow = ["mlflow>=2.12"]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.5",
+    "mypy>=1.10",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+    "contract: contract tests shared by all registry implementations",
+    "integration: end-to-end lifecycle tests",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "RUF"]
+ignore = ["SIM108"]
+
+[tool.ruff.lint.per-file-ignores]
+# X / y / X_live etc. are the standard ML naming convention
+"src/*" = ["N803", "N806"]
+"tests/*" = ["N803", "N806"]
+"scripts/*" = ["N803", "N806"]
+
+[tool.coverage.run]
+source = ["src/mlops_lifecycle"]
+
+[tool.mypy]
+python_version = "3.10"
+mypy_path = "src"
+ignore_missing_imports = true
+check_untyped_defs = true
