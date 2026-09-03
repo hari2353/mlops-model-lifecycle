@@ -31,12 +31,5 @@ jobs:
         run: pytest --cov=mlops_lifecycle --cov-report=term-missing
       - name: Full lifecycle run (train -> promote -> monitor)
         run: |
-          python scripts/run_lifecycle.py --out artifacts \
-            | tee artifacts/lifecycle.log
-          python -c "
-          from pathlib import Path
-          log = Path('artifacts/lifecycle.log').read_text()
-          assert 'promoted to PRODUCTION' in log, 'promotion missing'
-          assert 'DRIFT' in log or 'drift' in log, 'monitoring output missing'
-          print('lifecycle check passed')
-          "
+          python scripts/run_lifecycle.py --out artifacts | tee artifacts/lifecycle.log
+          python scripts/verify_lifecycle.py
