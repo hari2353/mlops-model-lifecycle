@@ -31,7 +31,7 @@ REGISTRY HISTORY (audit trail)
 
 The challenger is *good* (94.8% accuracy) — and the gate still rejects it, because a retrain that doesn't beat the production champion by the configured lift shouldn't ship. That's the point.
 
-**Verified quality bar:** 52 tests (unit + registry contract + integration), 96% coverage, ruff + mypy clean, CI on Python 3.10-3.12 including a full lifecycle run.
+**Verified quality bar:** 70 tests (unit + registry contract + integration), 96% coverage, ruff + mypy clean, CI on Python 3.10-3.12 including a full lifecycle run.
 
 ## Architecture
 
