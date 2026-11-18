@@ -48,12 +48,18 @@ class ModelRegistry(Protocol):
     def history(self, model_name: str) -> tuple[RegistryEntry, ...]:
         """Full audit trail, oldest first."""
 
+    def rollback(self, model_name: str, to_version: int | None = None) -> RegistryEntry:
+        """Revert production to an archived version (highest archived by
+        default), reusing promote-to-production semantics."""
+
 
 _VALID_TRANSITIONS: dict[Stage, frozenset[Stage]] = {
     Stage.NONE: frozenset({Stage.STAGING, Stage.ARCHIVED}),
     Stage.STAGING: frozenset({Stage.PRODUCTION, Stage.ARCHIVED, Stage.NONE}),
     Stage.PRODUCTION: frozenset({Stage.ARCHIVED, Stage.NONE}),
-    Stage.ARCHIVED: frozenset({Stage.NONE, Stage.STAGING}),
+    # archived -> production is the rollback path: an already-approved model
+    # may return to service during an incident (registry.rollback)
+    Stage.ARCHIVED: frozenset({Stage.NONE, Stage.STAGING, Stage.PRODUCTION}),
 }
 
 
@@ -144,6 +150,30 @@ class InMemoryRegistry:
     def history(self, model_name: str) -> tuple[RegistryEntry, ...]:
         return tuple(self._logs.get(model_name, ()))
 
+    def rollback(self, model_name: str, to_version: int | None = None) -> RegistryEntry:
+        """One-call incident rollback: re-promote an archived version.
+
+        Default target is the highest archived version. Delegates to
+        `transition(..., PRODUCTION)`, so the current champion is archived
+        automatically and the audit trail stays complete.
+        """
+        archived = sorted(
+            (
+                version
+                for (name, version), stage in self._stages.items()
+                if name == model_name and stage is Stage.ARCHIVED
+            ),
+            reverse=True,
+        )
+        if not archived:
+            msg = f"nothing archived to roll back to: {model_name}"
+            raise RegistryError(msg)
+        if to_version is not None and to_version not in archived:
+            msg = f"v{to_version} is not archived: {model_name}"
+            raise RegistryError(msg)
+        target = to_version if to_version is not None else archived[0]
+        return self.transition(model_name, target, Stage.PRODUCTION)
+
 
 class MlflowRegistry:
     """Adapter over MLflow's Model Registry (optional dependency).
@@ -217,6 +247,27 @@ class MlflowRegistry:
     def history(self, model_name: str) -> tuple[RegistryEntry, ...]:  # pragma: no cover
         return ()
 
+    def rollback(  # pragma: no cover - needs MLflow server
+        self, model_name: str, to_version: int | None = None
+    ) -> RegistryEntry:
+        client = self._client()
+        archived = sorted(
+            (
+                int(mv.version)
+                for mv in client.search_model_versions(f"name='{model_name}'")
+                if mv.current_stage == Stage.ARCHIVED.value.capitalize()
+            ),
+            reverse=True,
+        )
+        if not archived:
+            msg = f"nothing archived to roll back to: {model_name}"
+            raise RegistryError(msg)
+        if to_version is not None and to_version not in archived:
+            msg = f"v{to_version} is not archived: {model_name}"
+            raise RegistryError(msg)
+        target = to_version if to_version is not None else archived[0]
+        return self.transition(model_name, target, Stage.PRODUCTION)
+
 
 def DatasetHandle_stub(split: str):  # noqa: N802 - small internal helper
     from mlops_lifecycle.models import DatasetHandle
@@ -228,3 +279,76 @@ def _with_version(candidate: CandidateModel, version: int) -> CandidateModel:
     from dataclasses import replace
 
     return replace(candidate, version=version)
+
+
+_CARD_MAX_CHARS = 4000
+
+
+def model_card(
+    registry: ModelRegistry, model_name: str, version: int | None = None
+) -> str:
+    """Render a bounded Markdown model card from the registry's own audit
+    trail (EU-AI-Act-era governance baseline). Never invents numbers:
+    metrics nobody recorded render as "not recorded". History is cut to
+    keep the card under the module's `_CARD_MAX_CHARS` characters.
+    """
+    champion = registry.champion_report(model_name)
+    prod = registry.current(model_name, Stage.PRODUCTION)
+
+    # resolve the card's version: explicit arg > production champion > latest audited
+    history = registry.history(model_name)
+    if version is None:
+        version = prod.version if prod is not None else None
+        if version is None and history:
+            version = max(entry.version for entry in history)
+    if version is None:
+        # shortcut: a version with zero audit entries and zero stages reads as
+        # unknown — upgrade by adding a versions() listing to the protocol
+        msg = f"unknown model: {model_name}"
+        raise RegistryError(msg)
+
+    stage = "none"
+    for entry in history:
+        if entry.version == version:
+            stage = entry.to_stage.value
+    if prod is not None and prod.version == version:
+        stage = Stage.PRODUCTION.value
+
+    card_version_is_prod = prod is not None and prod.version == version
+    lines: list[str] = [
+        f"# Model card: {model_name}",
+        "",
+        "## Identity",
+        f"- version: v{version} ({stage})",
+        f"- generated: {datetime.now(tz=timezone.utc).isoformat(timespec='seconds')}",
+        "",
+        "## Metrics",
+    ]
+    if card_version_is_prod:
+        accuracy = f"{champion.accuracy:.4f}" if champion.accuracy is not None else "not recorded"
+        f1 = f"{champion.f1:.4f}" if champion.f1 is not None else "not recorded"
+    else:
+        accuracy = f1 = "not recorded"
+    lines += [
+        f"- accuracy: {accuracy}",
+        f"- f1: {f1}",
+        f"- model_uri: {champion.model_uri}" if champion.model_uri else "- model_uri: not recorded",
+        "",
+        "## Audit history",
+    ]
+
+    entry_lines = [
+        f"- {entry.at.isoformat(timespec='seconds')} v{entry.version}: "
+        f"{entry.from_stage.value} -> {entry.to_stage.value}"
+        for entry in history
+    ]
+    truncated_marker = "- ... older entries truncated"
+    kept: list[str] = []
+    for line in entry_lines:
+        if len("\n".join([*lines, *kept, line])) + len(truncated_marker) > _CARD_MAX_CHARS:
+            break
+        kept.append(line)
+    if len(kept) < len(entry_lines):
+        kept.append(truncated_marker)
+
+    return "\n".join([*lines, *kept])

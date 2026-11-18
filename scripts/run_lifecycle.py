@@ -22,6 +22,7 @@ from mlops_lifecycle.data import make_dataset, train_val_test_split
 from mlops_lifecycle.lifecycle import LifecycleRunner
 from mlops_lifecycle.models import ChampionReport, GateConfig, Stage
 from mlops_lifecycle.monitoring import MonitoringConfig, monitor_batch
+from mlops_lifecycle.policy import ActionPolicy, decide_action
 from mlops_lifecycle.registry import InMemoryRegistry
 from mlops_lifecycle.training import InMemoryModelStore, SklearnEvaluator, SklearnTrainer
 
@@ -122,6 +123,12 @@ def main() -> None:
           f"(floor 0.70)")
     if monitor_event.notes:
         print(f"ALERTS             : {'; '.join(monitor_event.notes)}")
+        action = decide_action(
+            monitor_event,
+            ActionPolicy(min_accuracy=MonitoringConfig().min_accuracy),
+        )
+        print(f"recommended action : {action.value.upper()} "
+              f"(policy: PAGE > ROLLBACK > RETRAIN > NONE)")
     else:
         print("ALERTS             : none")
 

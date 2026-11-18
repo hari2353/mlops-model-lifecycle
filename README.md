@@ -63,12 +63,28 @@ Deliberate production semantics baked in:
 
 ```bash
 pip install -e .[dev]
-pytest                                            # 52 tests
+pytest                                            # 70 tests
 python scripts/run_lifecycle.py --out artifacts   # the demo above
 # vary the story:
 python scripts/run_lifecycle.py --live-drift-scale 0     # clean batch -> drift OK
 python scripts/run_lifecycle.py --live-noise 0.25       # label noise -> perf decay alert
 ```
+
+## Incident + governance layer (market-steal, 2026-11-18)
+
+- **`registry.rollback(model_name, to_version=None)`** — one-call revert to
+  the archived previous champion (highest archived by default), reusing
+  promote-to-production semantics so the outgoing champion is archived and
+  the audit trail stays complete. This makes `archived -> production` a
+  legal transition: an already-approved model may return to service.
+- **`registry.model_card(registry, model_name, version=None)`** — bounded
+  (≤ 4k chars) Markdown card: identity, recorded metrics (never invented),
+  full audit history, generated-at. Unknown model → `RegistryError`.
+- **`policy.decide_action(event, ActionPolicy)`** — pure alert-to-action
+  policy with documented precedence **PAGE > ROLLBACK > RETRAIN > NONE**:
+  accuracy-below-floor ⇒ ROLLBACK, drift alone ⇒ RETRAIN, both ⇒ PAGE.
+  Wired as `recommended_action` on every run result that monitored, and
+  printed by the demo (`recommended action : PAGE`).
 
 ### Using MLflow as the registry backend
 

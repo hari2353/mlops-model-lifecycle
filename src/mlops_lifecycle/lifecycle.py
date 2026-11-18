@@ -21,6 +21,7 @@ from mlops_lifecycle.models import (
     Stage,
 )
 from mlops_lifecycle.monitoring import MonitoringConfig, monitor_batch
+from mlops_lifecycle.policy import Action, ActionPolicy, decide_action
 from mlops_lifecycle.registry import ModelRegistry
 from mlops_lifecycle.training import (
     Evaluator,
@@ -61,6 +62,7 @@ class LifecycleRunResult:
     report: EvaluationReport
     promotion: PromotionResult
     monitoring: MonitoringEvent | None = None
+    recommended_action: Action | None = None
 
 
 class LifecycleRunner:
@@ -122,6 +124,7 @@ class LifecycleRunner:
             self._reporter.step(f"v{version} rejected: {'; '.join(promotion.reasons)}")
 
         monitoring = None
+        recommended_action = None
         if monitor is not None and reference_X is not None:
             estimator = self._store.load(candidate)
             monitoring = monitor_batch(
@@ -131,10 +134,15 @@ class LifecycleRunner:
                 monitor,
                 self._monitoring_config,
             )
+            recommended_action = decide_action(
+                monitoring,
+                ActionPolicy(min_accuracy=self._monitoring_config.min_accuracy),
+            )
             self._reporter.step(
                 f"monitoring: drift={monitoring.drift.status.value} "
                 f"max_psi={monitoring.drift.max_psi:.3f} "
-                f"live_acc={monitoring.performance_accuracy:.3f}"
+                f"live_acc={monitoring.performance_accuracy:.3f} "
+                f"action={recommended_action.value}"
                 + (f" notes={list(monitoring.notes)}" if monitoring.notes else "")
             )
 
@@ -143,6 +151,7 @@ class LifecycleRunner:
             report=report,
             promotion=promotion,
             monitoring=monitoring,
+            recommended_action=recommended_action,
         )
 
 
