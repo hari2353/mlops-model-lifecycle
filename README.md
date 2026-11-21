@@ -70,6 +70,30 @@ python scripts/run_lifecycle.py --live-drift-scale 0     # clean batch -> drift 
 python scripts/run_lifecycle.py --live-noise 0.25       # label noise -> perf decay alert
 ```
 
+## Model datasheets (Harvard Edge cross-pollination)
+
+Every registry artifact can ship a versioned datasheet following Harvard
+Edge's ML-Sensors template:
+
+```python
+from mlops_lifecycle.datasheet import build_datasheet
+
+sheet = build_datasheet(
+    model, evaluation,
+    intended_use="Score churn risk for retention outreach.",
+    limitations=("Not validated outside the 2025 cohort.",),
+    hardware={"gpu": "T4", "memory_gb": 16},
+    privacy={"pii": "no raw PII retained"},
+    environmental={"kwh": 0.4, "kgco2e": 0.16},
+)
+print(sheet.to_markdown())
+```
+
+The builder ties the datasheet to the same registry URI and training-data
+fingerprint as the promoted model, rejects a mismatched evaluation report,
+and renders undocumented optional sections as "not documented" rather than
+omitting them. Output is deterministic, so it can be committed or diffed.
+
 ## Incident + governance layer (market-steal, 2026-11-18)
 
 - **`registry.rollback(model_name, to_version=None)`** — one-call revert to
