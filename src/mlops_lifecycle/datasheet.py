@@ -7,7 +7,7 @@ documented" instead of being silently dropped.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from mlops_lifecycle.models import CandidateModel, EvaluationReport
 
@@ -26,6 +26,7 @@ class Datasheet:
     hardware: dict[str, object]
     privacy: dict[str, object]
     environmental: dict[str, object]
+    deployment: dict[str, object] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not self.intended_use.strip():
@@ -45,6 +46,7 @@ class Datasheet:
             "hardware": dict(self.hardware),
             "privacy": dict(self.privacy),
             "environmental": dict(self.environmental),
+            "deployment": dict(self.deployment),
         }
 
     def to_markdown(self) -> str:
@@ -74,6 +76,9 @@ class Datasheet:
                 lines.extend(f"- {key}: {value}" for key, value in payload.items())
             else:
                 lines.append(_NOT_DOCUMENTED)
+        if self.deployment:
+            lines.extend(["", "## Deployment", ""])
+            lines.extend(f"- {key}: {value}" for key, value in self.deployment.items())
         lines.extend([
             "",
             "## Version history",
@@ -93,6 +98,7 @@ def build_datasheet(
     hardware: dict[str, object] | None = None,
     privacy: dict[str, object] | None = None,
     environmental: dict[str, object] | None = None,
+    deployment: dict[str, object] | None = None,
 ) -> Datasheet:
     """Assemble a datasheet from the registry's own artifact + metrics."""
     if evaluation.model_uri != model.uri:
@@ -121,4 +127,5 @@ def build_datasheet(
         hardware=dict(hardware or {}),
         privacy=dict(privacy or {}),
         environmental=dict(environmental or {}),
+        deployment=dict(deployment or {}),
     )

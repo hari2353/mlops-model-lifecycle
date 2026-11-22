@@ -75,6 +75,18 @@ def test_datasheet_rejects_missing_intended_use_or_limitations():
         raise AssertionError(f"accepted invalid datasheet: {kwargs}")
 
 
+def test_datasheet_renders_deployment_when_supplied():
+    sheet = build_datasheet(
+        _model(), _report(),
+        intended_use="Score churn risk.",
+        limitations=("Small validation set.",),
+        deployment={"peak_bytes": 1024, "quantization": "int8"},
+    )
+    text = sheet.to_markdown()
+    assert "## Deployment" in text
+    assert "peak_bytes: 1024" in text
+
+
 def test_datasheet_rejects_mismatched_evaluation():
     try:
         build_datasheet(

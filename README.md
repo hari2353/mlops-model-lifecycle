@@ -121,7 +121,7 @@ registry = MlflowRegistry(tracking_uri='file://./mlruns')
 "
 ```
 
-## Repository layout
+## Edge deployment budget (TFLite Micro + Google Coral cross-pollination)\n\n`mlops_lifecycle.deployment` answers the edge release-gate question: will this\nmodel run on the target device?\n\n- `plan_tensor_arena` greedily reuses arena space between tensors whose\n  lifetimes do not overlap (TFLite Micro style), returning peak bytes,\n  offsets, and reused bytes.\n- `coral_readiness` checks the Coral full-integer requirements: int8/uint8\n  input and output and no unsupported ops.\n\n```python\nfrom mlops_lifecycle.deployment import Tensor, coral_readiness, plan_tensor_arena\nplan_tensor_arena([Tensor(\"a\", 1000, 0, 1), Tensor(\"b\", 1000, 2, 3)])\ncoral_readiness(\"int8\", \"int8\", [\"conv2d\", \"fully_connected\"])\n```\n\nThe planner is deterministic and offline; no TFLite runtime needed. An\noptional `deployment` dict can be passed to `build_datasheet` to carry the\nbudget in the datasheet.\n\n## Repository layout
 
 ```
 src/mlops_lifecycle/
