@@ -153,8 +153,7 @@ class DriftReport:
     @property
     def drifted_features(self) -> tuple[str, ...]:
         return tuple(
-            name for name, psi in self.psi_by_feature.items()
-            if psi >= self.threshold_drift
+            name for name, psi in self.psi_by_feature.items() if psi >= self.threshold_drift
         )
 
 

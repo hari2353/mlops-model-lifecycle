@@ -202,9 +202,7 @@ class MlflowRegistry:
 
     def register(self, model: CandidateModel) -> int:  # pragma: no cover - needs server
         client = self._client()
-        mv = client.create_model_version(
-            name=model.name, source=model.uri, run_id=None
-        )
+        mv = client.create_model_version(name=model.name, source=model.uri, run_id=None)
         self._stages[(model.name, str(mv.version))] = Stage.NONE
         return int(mv.version)
 
@@ -284,9 +282,7 @@ def _with_version(candidate: CandidateModel, version: int) -> CandidateModel:
 _CARD_MAX_CHARS = 4000
 
 
-def model_card(
-    registry: ModelRegistry, model_name: str, version: int | None = None
-) -> str:
+def model_card(registry: ModelRegistry, model_name: str, version: int | None = None) -> str:
     """Render a bounded Markdown model card from the registry's own audit
     trail (EU-AI-Act-era governance baseline). Never invents numbers:
     metrics nobody recorded render as "not recorded". History is cut to

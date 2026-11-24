@@ -86,9 +86,7 @@ def drift_report(
 
     psi_by_feature: dict[str, float] = {}
     for i, name in enumerate(names):
-        psi_by_feature[name] = round(
-            compute_psi(reference_X[:, i], live_X[:, i]), 4
-        )
+        psi_by_feature[name] = round(compute_psi(reference_X[:, i], live_X[:, i]), 4)
 
     if any(v >= config.psi_drift for v in psi_by_feature.values()):
         status = DriftStatus.DRIFT
@@ -124,9 +122,7 @@ def monitor_batch(
 
     notes: list[str] = []
     if accuracy < config.min_accuracy:
-        notes.append(
-            f"live accuracy {accuracy:.3f} below floor {config.min_accuracy:.2f}"
-        )
+        notes.append(f"live accuracy {accuracy:.3f} below floor {config.min_accuracy:.2f}")
     if drift.status is DriftStatus.DRIFT:
         notes.append(f"covariate drift on {', '.join(drift.drifted_features)}")
 

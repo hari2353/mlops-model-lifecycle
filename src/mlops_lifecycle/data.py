@@ -102,8 +102,8 @@ def train_val_test_split(
     n_val = int(len(indices) * val_fraction)
     n_test = int(len(indices) * test_fraction)
     test_idx = indices[:n_test]
-    val_idx = indices[n_test:n_test + n_val]
-    train_idx = indices[n_test + n_val:]
+    val_idx = indices[n_test : n_test + n_val]
+    train_idx = indices[n_test + n_val :]
 
     def take(idx: NDArray[np.int64]) -> tuple[FloatArray, FloatArray]:
         return X[idx], y[idx]

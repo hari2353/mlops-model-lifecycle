@@ -5,6 +5,7 @@ training data, evaluation, hardware, privacy and environmental footprint in
 one deterministic document. Missing optional sections are rendered as "not
 documented" instead of being silently dropped.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -79,13 +80,15 @@ class Datasheet:
         if self.deployment:
             lines.extend(["", "## Deployment", ""])
             lines.extend(f"- {key}: {value}" for key, value in self.deployment.items())
-        lines.extend([
-            "",
-            "## Version history",
-            "",
-            f"- 1: initial datasheet for `{self.uri}`",
-            "",
-        ])
+        lines.extend(
+            [
+                "",
+                "## Version history",
+                "",
+                f"- 1: initial datasheet for `{self.uri}`",
+                "",
+            ]
+        )
         return "\n".join(lines)
 
 
@@ -102,9 +105,7 @@ def build_datasheet(
 ) -> Datasheet:
     """Assemble a datasheet from the registry's own artifact + metrics."""
     if evaluation.model_uri != model.uri:
-        raise ValueError(
-            f"evaluation is for {evaluation.model_uri!r}, not {model.uri!r}"
-        )
+        raise ValueError(f"evaluation is for {evaluation.model_uri!r}, not {model.uri!r}")
     return Datasheet(
         model=model.name,
         version=model.version,

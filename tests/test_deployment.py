@@ -64,9 +64,7 @@ def test_coral_blocks_float_io():
 
 
 def test_coral_blocks_unsupported_ops():
-    out = coral_readiness(
-        "int8", "uint8", ["conv2d", "custom_op"], unsupported_ops={"custom_op"}
-    )
+    out = coral_readiness("int8", "uint8", ["conv2d", "custom_op"], unsupported_ops={"custom_op"})
     assert out["ready"] is False
     assert out["blocking"] == ["unsupported ops: custom_op"]
 

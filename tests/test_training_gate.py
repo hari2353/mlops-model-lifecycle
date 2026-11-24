@@ -82,16 +82,12 @@ class TestPromotionGate:
 
     def test_lift_over_champion_required(self) -> None:
         # champion at 0.85, candidate at 0.86 -> lift 0.01 < 0.02 -> reject
-        result = decide_promotion(
-            make_report(0.86, 0.9, 0.95), make_champion(0.85), GateConfig()
-        )
+        result = decide_promotion(make_report(0.86, 0.9, 0.95), make_champion(0.85), GateConfig())
         assert result.decision is PromotionDecision.REJECTED
         assert any("lift" in r for r in result.reasons)
 
     def test_lift_gate_passes_when_beating_champion(self) -> None:
-        result = decide_promotion(
-            make_report(0.90, 0.9, 0.95), make_champion(0.85), GateConfig()
-        )
+        result = decide_promotion(make_report(0.90, 0.9, 0.95), make_champion(0.85), GateConfig())
         assert result.decision is PromotionDecision.PROMOTED
 
     def test_champion_required_option(self) -> None:

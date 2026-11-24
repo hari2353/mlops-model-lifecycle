@@ -18,7 +18,8 @@ def _report(uri: str = "models:/churn/3") -> EvaluationReport:
 
 def test_build_datasheet_carries_registry_identity_and_metrics():
     sheet = build_datasheet(
-        _model(), _report(),
+        _model(),
+        _report(),
         intended_use="Score churn risk for retention outreach.",
         limitations=("Not validated outside the 2025 cohort.",),
     )
@@ -29,7 +30,8 @@ def test_build_datasheet_carries_registry_identity_and_metrics():
 
 def test_markdown_contains_every_section_and_missing_ones_are_explicit():
     sheet = build_datasheet(
-        _model(), _report(),
+        _model(),
+        _report(),
         intended_use="Score churn risk.",
         limitations=("Small validation set.",),
     )
@@ -77,7 +79,8 @@ def test_datasheet_rejects_missing_intended_use_or_limitations():
 
 def test_datasheet_renders_deployment_when_supplied():
     sheet = build_datasheet(
-        _model(), _report(),
+        _model(),
+        _report(),
         intended_use="Score churn risk.",
         limitations=("Small validation set.",),
         deployment={"peak_bytes": 1024, "quantization": "int8"},
@@ -90,8 +93,10 @@ def test_datasheet_renders_deployment_when_supplied():
 def test_datasheet_rejects_mismatched_evaluation():
     try:
         build_datasheet(
-            _model(), _report("models:/other/1"),
-            intended_use="use", limitations=("x",),
+            _model(),
+            _report("models:/other/1"),
+            intended_use="use",
+            limitations=("x",),
         )
     except ValueError as exc:
         assert "evaluation is for" in str(exc)

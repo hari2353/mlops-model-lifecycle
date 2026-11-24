@@ -29,13 +29,9 @@ class TestModels:
 
     def test_evaluation_report_bounds(self) -> None:
         with pytest.raises(ValueError, match="accuracy"):
-            EvaluationReport(
-                model_uri="u", accuracy=1.5, f1=0.9, roc_auc=0.9, n_samples=10
-            )
+            EvaluationReport(model_uri="u", accuracy=1.5, f1=0.9, roc_auc=0.9, n_samples=10)
         with pytest.raises(ValueError, match="n_samples"):
-            EvaluationReport(
-                model_uri="u", accuracy=0.9, f1=0.9, roc_auc=0.9, n_samples=0
-            )
+            EvaluationReport(model_uri="u", accuracy=0.9, f1=0.9, roc_auc=0.9, n_samples=0)
 
     def test_gate_config_bounds(self) -> None:
         with pytest.raises(ValueError, match="min_accuracy"):

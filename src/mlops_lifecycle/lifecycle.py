@@ -104,10 +104,7 @@ class LifecycleRunner:
         report = self._evaluator.evaluate(candidate, val)
 
         champion = champion_source or self._registry.champion_report(model_name)
-        self._reporter.step(
-            f"promotion gate: champion="
-            f"{champion.model_uri or 'none'}"
-        )
+        self._reporter.step(f"promotion gate: champion={champion.model_uri or 'none'}")
         promotion = decide_promotion(report, champion, self._gate)
 
         version = self._registry.register(candidate)
@@ -117,9 +114,7 @@ class LifecycleRunner:
             self._reporter.step(f"v{version}: staging -> PRODUCTION")
             self._registry.transition(model_name, version, Stage.STAGING)
             entry = self._registry.transition(model_name, version, Stage.PRODUCTION)
-            self._reporter.step(
-                f"v{version} promoted to PRODUCTION at {entry.at.isoformat()}"
-            )
+            self._reporter.step(f"v{version} promoted to PRODUCTION at {entry.at.isoformat()}")
         else:
             self._reporter.step(f"v{version} rejected: {'; '.join(promotion.reasons)}")
 

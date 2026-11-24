@@ -101,9 +101,7 @@ class TestFullLifecycle:
         train_c, val_c, _ = train_val_test_split(Xc, yc, hc)
         second = runner.run("churn", train_c, val_c)
         lift = second.report.accuracy - first.report.accuracy
-        expected = (
-            PromotionDecision.PROMOTED if lift >= 0.02 else PromotionDecision.REJECTED
-        )
+        expected = PromotionDecision.PROMOTED if lift >= 0.02 else PromotionDecision.REJECTED
         assert second.promotion.decision is expected
         if expected is PromotionDecision.PROMOTED:
             assert second.report.accuracy > first.report.accuracy
@@ -115,9 +113,17 @@ class TestFullLifecycle:
         X, y, h = make_dataset(n_samples=1500, n_features=6, seed=42)
         train, val, _ = train_val_test_split(X, y, h)
         result = runner.run(
-            "churn", train, val,
-            monitor=make_dataset(n_samples=600, n_features=6, seed=99,
-                                 drift_feature=0, drift_scale=1.2, label_noise=0.2)[:2],
+            "churn",
+            train,
+            val,
+            monitor=make_dataset(
+                n_samples=600,
+                n_features=6,
+                seed=99,
+                drift_feature=0,
+                drift_scale=1.2,
+                label_noise=0.2,
+            )[:2],
             reference_X=X,
         )
         assert result.monitoring is not None
@@ -142,7 +148,8 @@ class TestFullLifecycle:
         store = InMemoryModelStore()
         registry = InMemoryRegistry()
         runner, _ = build_runner(
-            store, registry,
+            store,
+            registry,
             gate=GateConfig(min_accuracy=0.99, min_f1=0.99, min_roc_auc=0.99),
         )
         X, y, h = make_dataset(n_samples=800, n_features=4, seed=3)

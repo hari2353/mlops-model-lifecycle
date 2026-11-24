@@ -196,8 +196,12 @@ class TestRunnerWiring:
         X, y, h = make_dataset(n_samples=1200, n_features=6, seed=42)
         train, val, _ = train_val_test_split(X, y, h)
         live = make_dataset(
-            n_samples=600, n_features=6, seed=99,
-            drift_feature=0, drift_scale=1.2, label_noise=0.2,
+            n_samples=600,
+            n_features=6,
+            seed=99,
+            drift_feature=0,
+            drift_scale=1.2,
+            label_noise=0.2,
         )[:2]
 
         result = runner.run("m", train, val, monitor=live, reference_X=X)

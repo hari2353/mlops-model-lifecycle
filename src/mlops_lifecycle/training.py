@@ -161,9 +161,7 @@ def decide_promotion(
     reasons: list[str] = []
 
     if report.accuracy < config.min_accuracy:
-        reasons.append(
-            f"accuracy {report.accuracy:.3f} < min {config.min_accuracy:.2f}"
-        )
+        reasons.append(f"accuracy {report.accuracy:.3f} < min {config.min_accuracy:.2f}")
     if report.f1 < config.min_f1:
         reasons.append(f"f1 {report.f1:.3f} < min {config.min_f1:.2f}")
     if report.roc_auc < config.min_roc_auc:
@@ -178,9 +176,7 @@ def decide_promotion(
     elif config.require_champion_for_promotion:
         reasons.append("no champion present but champion required for promotion")
 
-    decision = (
-        PromotionDecision.PROMOTED if not reasons else PromotionDecision.REJECTED
-    )
+    decision = PromotionDecision.PROMOTED if not reasons else PromotionDecision.REJECTED
     return PromotionResult(
         decision=decision,
         reasons=tuple(reasons) if reasons else ("all gates passed",),

@@ -78,10 +78,12 @@ class TestRegistryContract:
         assert registry.current("cm", Stage.PRODUCTION) is not None
         assert registry.current("cm", Stage.PRODUCTION).version == 2  # type: ignore[union-attr]
         # the old champion is no longer production
-        assert all(
-            e.version != 1 or e.to_stage is not Stage.PRODUCTION
-            for e in registry.history("cm")
-        ) or True  # history detail is implementation-specific
+        assert (
+            all(
+                e.version != 1 or e.to_stage is not Stage.PRODUCTION for e in registry.history("cm")
+            )
+            or True
+        )  # history detail is implementation-specific
 
     def test_champion_report_without_champion(self, registry_factory: RegistryFactory) -> None:
         registry = registry_factory()
@@ -96,10 +98,14 @@ class TestInMemoryRegistrySpecifics:
         registry.transition("cm", 1, Stage.PRODUCTION)
         history = registry.history("cm")
         stages = [(e.from_stage, e.to_stage) for e in history]
-        assert stages == [
-            (Stage.NONE, Stage.STAGING),
-            (Stage.NONE, Stage.STAGING),  # register logs nothing
-        ][:0] or [s for s in stages if s[0] is Stage.STAGING][:1]
+        assert (
+            stages
+            == [
+                (Stage.NONE, Stage.STAGING),
+                (Stage.NONE, Stage.STAGING),  # register logs nothing
+            ][:0]
+            or [s for s in stages if s[0] is Stage.STAGING][:1]
+        )
         # the meaningful invariant: production transition is logged
         assert any(e.to_stage is Stage.PRODUCTION for e in history)
 
@@ -158,8 +164,9 @@ class TestDriftReport:
         from mlops_lifecycle.data import make_dataset
 
         X, _, _ = make_dataset(n_samples=1500, n_features=4, seed=1)
-        live, _, _ = make_dataset(n_samples=800, n_features=4, seed=2, drift_feature=1,
-                                  drift_scale=1.5)
+        live, _, _ = make_dataset(
+            n_samples=800, n_features=4, seed=2, drift_feature=1, drift_scale=1.5
+        )
         report = drift_report(X, live, MonitoringConfig())
         assert report.status.value == "drift"
         assert "f1" in report.drifted_features

@@ -6,6 +6,7 @@ arena by reusing space between tensors whose lifetimes do not overlap; Coral
 requires int8/uint8 input and output. Both checks answer one release-gate
 question: will this model run on the target edge device?
 """
+
 from __future__ import annotations
 
 from collections.abc import Iterable
